@@ -3,11 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRISON_GESHIPAN - 익명 게시판</title>
+    <title>PRISON_GESHIPAN - 온라인 익명 게시판</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK (v9 Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, getDoc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // 🔥 발급받으신 Firebase 설정을 적용했습니다!
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOWcZKRUL0qd6EhhV4kxvRWXtKwdcX_gQ",
+            authDomain: "prison-geshipan.firebaseapp.com",
+            projectId: "prison-geshipan",
+            storageBucket: "prison-geshipan.firebasestorage.app",
+            messagingSenderId: "277735260868",
+            appId: "1:277735260868:web:f1c8587e5b468bd88abf91",
+            measurementId: "G-PKJ1BJP34L"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // 전역 함수로 등록하여 HTML 버튼에서 호출 가능하게 설정
+        window.db = db;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.getDocs = getDocs;
+        window.doc = doc;
+        window.getDoc = getDoc;
+        window.updateDoc = updateDoc;
+        window.deleteDoc = deleteDoc;
+        window.query = query;
+        window.orderBy = orderBy;
+
+        // 파이어베이스 로드 후 게시글 불러오기 실행
+        window.dispatchEvent(new Event('firebase-ready'));
+    </script>
+
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -22,46 +58,38 @@
 </head>
 <body class="min-h-screen flex flex-col items-center justify-start p-4 md:p-8">
 
-    <!-- 메인 컨테이너 -->
     <div class="w-full max-w-3xl bg-white border border-black shadow-lg p-4 md:p-6 space-y-6">
         
-        <!-- 헤더 영역 -->
         <header class="border-b-2 border-black pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-black tracking-tight uppercase">PRISON_GESHIPAN</h1>
-                <p class="text-xs text-zinc-500 mt-1">교도소 서버 전용 익명 게시판</p>
+                <p class="text-xs text-zinc-500 mt-1">교도소 서버 전용 온라인 익명 게시판</p>
             </div>
             
             <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                <!-- 고정 닉네임 표시 -->
                 <div class="text-xs font-mono bg-zinc-100 border border-zinc-300 px-3 py-1.5 rounded">
                     <span class="text-zinc-500">내 식별자:</span>
                     <strong id="user-identity" class="text-black font-bold">로딩 중...</strong>
                 </div>
 
-                <!-- 관리자 버튼 -->
                 <button id="admin-btn" onclick="toggleAdminModal()" class="text-xs font-bold border border-black px-3 py-1.5 hover:bg-black hover:text-white transition">
                     관리자 로그인
                 </button>
             </div>
         </header>
 
-        <!-- 상단 컨트롤 (검색 & 글작성 버튼) -->
         <div class="flex flex-col sm:flex-row gap-2 justify-between items-stretch sm:items-center">
-            <!-- 검색창 -->
             <div class="relative flex-1">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm"></i>
                 <input type="text" id="search-input" oninput="renderPosts()" placeholder="글 제목, 내용 검색..." 
                     class="w-full pl-9 pr-3 py-2 text-sm border border-zinc-300 focus:outline-none focus:border-black rounded-none">
             </div>
 
-            <!-- 글쓰기 버튼 -->
             <button onclick="openWriteModal()" class="bg-black text-white px-4 py-2 text-sm font-bold border border-black hover:bg-zinc-800 transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-pen-to-square"></i> 글쓰기
             </button>
         </div>
 
-        <!-- 카테고리 필터 -->
         <nav class="flex border-b border-zinc-200 text-sm font-bold overflow-x-auto">
             <button onclick="setCategory('ALL')" id="cat-ALL" class="cat-btn px-4 py-2 border-b-2 border-black text-black">전체</button>
             <button onclick="setCategory('HOT')" id="cat-HOT" class="cat-btn px-4 py-2 text-zinc-400 hover:text-black">🔥 인기글</button>
@@ -71,18 +99,14 @@
             <button onclick="setCategory('GAME')" id="cat-GAME" class="cat-btn px-4 py-2 text-zinc-400 hover:text-black">🎮 게임/파티</button>
         </nav>
 
-        <!-- 게시글 목록 -->
         <main id="post-list" class="divide-y divide-zinc-200 min-h-[300px]">
-            <!-- JS로 로딩됨 -->
+            <div class="text-center py-12 text-zinc-400 text-sm">데이터를 불러오는 중...</div>
         </main>
 
-        <!-- 푸터 -->
         <footer class="text-center text-xs text-zinc-400 pt-4 border-t border-zinc-200">
-            PRISON_GESHIPAN &copy; Anonymous Board.
+            PRISON_GESHIPAN &copy; Online Anonymous Board.
         </footer>
     </div>
-
-    <!-- ------------------ 모달 창들 ------------------ -->
 
     <!-- 글 작성 모달 -->
     <div id="write-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
@@ -102,22 +126,18 @@
                         <option value="GAME">🎮 게임/파티</option>
                     </select>
                 </div>
-
                 <div>
                     <label class="block font-bold mb-1">작성자 식별자</label>
                     <input type="text" id="write-author" readonly class="w-full border border-zinc-200 bg-zinc-100 p-2 font-mono text-zinc-600">
                 </div>
-
                 <div>
                     <label class="block font-bold mb-1">제목</label>
                     <input type="text" id="write-title" placeholder="제목을 입력하세요" class="w-full border border-zinc-300 p-2 focus:outline-none focus:border-black">
                 </div>
-
                 <div>
                     <label class="block font-bold mb-1">내용</label>
                     <textarea id="write-content" rows="5" placeholder="내용을 입력하세요..." class="w-full border border-zinc-300 p-2 focus:outline-none focus:border-black"></textarea>
                 </div>
-
                 <div>
                     <label class="block font-bold mb-1">삭제 비밀번호 (4자리)</label>
                     <input type="password" id="write-password" maxlength="4" placeholder="****" class="w-full border border-zinc-300 p-2 focus:outline-none focus:border-black">
@@ -149,10 +169,8 @@
                 <button onclick="closeDetailModal()" class="text-zinc-500 hover:text-black"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
 
-            <!-- 내용 -->
             <div id="detail-content" class="text-sm leading-relaxed whitespace-pre-wrap py-2 border-b border-zinc-200 break-all"></div>
 
-            <!-- 액션 버튼 -->
             <div class="flex flex-wrap items-center justify-between gap-2 py-2">
                 <div class="flex gap-2">
                     <button onclick="likePost()" class="px-3 py-1.5 border border-black text-xs font-bold hover:bg-black hover:text-white transition">
@@ -168,7 +186,6 @@
                 </div>
             </div>
 
-            <!-- 댓글 영역 -->
             <div class="space-y-3 pt-2">
                 <h4 class="font-bold text-sm border-b border-zinc-300 pb-1">댓글 (<span id="detail-comment-count">0</span>)</h4>
                 <div id="comment-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
@@ -195,7 +212,7 @@
         </div>
     </div>
 
-    <!-- 자바스크립트 전체 코드 -->
+    <!-- 자바스크립트 로직 (Firebase 연동) -->
     <script>
         let posts = [];
         let currentCategory = 'ALL';
@@ -205,11 +222,11 @@
 
         const ADMIN_HASH = "8d1f2a4e4024c0840b3c69c676766649e7b2f6f4c8032f6b0f025433a7585043";
 
-        window.onload = function() {
+        window.addEventListener('firebase-ready', async () => {
             initUserIdentity();
-            loadPosts();
+            await loadPosts();
             renderPosts();
-        };
+        });
 
         function initUserIdentity() {
             let savedId = localStorage.getItem('prison_user_id');
@@ -230,13 +247,18 @@
             document.getElementById('user-identity').innerText = userIdentity;
         }
 
-        function loadPosts() {
-            const data = localStorage.getItem('prison_posts');
-            posts = data ? JSON.parse(data) : [];
-        }
-
-        function savePosts() {
-            localStorage.setItem('prison_posts', JSON.stringify(posts));
+        async function loadPosts() {
+            try {
+                const q = window.query(window.collection(window.db, "posts"), window.orderBy("createdAt", "desc"));
+                const querySnapshot = await window.getDocs(q);
+                posts = [];
+                querySnapshot.forEach((docSnap) => {
+                    posts.push({ id: docSnap.id, ...docSnap.data() });
+                });
+            } catch (e) {
+                console.error("데이터 로딩 실패:", e);
+                posts = [];
+            }
         }
 
         async function sha256(message) {
@@ -263,16 +285,16 @@
             let filtered = posts.filter(p => {
                 const matchesCategory = 
                     currentCategory === 'ALL' ? true :
-                    currentCategory === 'HOT' ? p.likes >= 5 :
+                    currentCategory === 'HOT' ? (p.likes || 0) >= 5 :
                     p.category === currentCategory;
-                const matchesSearch = p.title.toLowerCase().includes(searchKeyword) || p.content.toLowerCase().includes(searchKeyword);
+                const matchesSearch = (p.title || '').toLowerCase().includes(searchKeyword) || (p.content || '').toLowerCase().includes(searchKeyword);
                 return matchesCategory && matchesSearch;
             });
 
             filtered.sort((a, b) => {
                 if (a.isPinned && !b.isPinned) return -1;
                 if (!a.isPinned && b.isPinned) return 1;
-                return b.createdAt - a.createdAt;
+                return (b.createdAt || 0) - (a.createdAt || 0);
             });
 
             if (filtered.length === 0) {
@@ -281,7 +303,7 @@
             }
 
             filtered.forEach(post => {
-                const isBlinded = post.reports >= 3 && !post.unblindedByAdmin;
+                const isBlinded = (post.reports || 0) >= 3 && !post.unblindedByAdmin;
                 const catMap = { 'ACCUSE': '🚨 고발', 'TALK': '💬 아무말', 'QNA': '❓ 질문', 'GAME': '🎮 게임' };
                 
                 const item = document.createElement('div');
@@ -291,17 +313,17 @@
                 item.innerHTML = `
                     <div class="flex items-center justify-between text-xs text-zinc-500">
                         <span class="border border-zinc-300 px-1.5 py-0.5 text-black font-bold">${post.isPinned ? '📌 고정' : catMap[post.category] || '기타'}</span>
-                        <span>${new Date(post.createdAt).toLocaleDateString()}</span>
+                        <span>${new Date(post.createdAt || Date.now()).toLocaleDateString()}</span>
                     </div>
                     <div class="font-bold text-base text-zinc-900 ${isBlinded ? 'blur-content' : ''} break-all">
-                        ${isBlinded ? '🚨 신고 누적으로 블라인드 처리된 글입니다.' : escapeHtml(post.title)}
+                        ${isBlinded ? '🚨 신고 누적으로 블라인드 처리된 글입니다.' : escapeHtml(post.title || '')}
                     </div>
                     <div class="flex justify-between items-center text-xs text-zinc-400 mt-1">
-                        <span class="font-mono text-zinc-600">${post.author}</span>
+                        <span class="font-mono text-zinc-600">${post.author || ''}</span>
                         <div class="space-x-2">
-                            <span>👍 ${post.likes}</span>
+                            <span>👍 ${post.likes || 0}</span>
                             <span>💬 ${post.comments ? post.comments.length : 0}</span>
-                            <span>조회 ${post.views}</span>
+                            <span>조회 ${post.views || 0}</span>
                         </div>
                     </div>
                 `;
@@ -323,7 +345,7 @@
             document.getElementById('write-modal').classList.remove('flex');
         }
 
-        function savePost() {
+        async function savePost() {
             const category = document.getElementById('write-category').value;
             const title = document.getElementById('write-title').value.trim();
             const content = document.getElementById('write-content').value.trim();
@@ -334,35 +356,42 @@
                 return;
             }
 
-            const newPost = {
-                id: Date.now(),
-                category: category,
-                author: userIdentity,
-                title: title,
-                content: content,
-                password: password,
-                createdAt: Date.now(),
-                views: 0,
-                likes: 0,
-                reports: 0,
-                isPinned: false,
-                unblindedByAdmin: false,
-                comments: []
-            };
+            try {
+                const newPost = {
+                    category,
+                    author: userIdentity,
+                    title,
+                    content,
+                    password,
+                    createdAt: Date.now(),
+                    views: 0,
+                    likes: 0,
+                    reports: 0,
+                    isPinned: false,
+                    unblindedByAdmin: false,
+                    comments: []
+                };
 
-            posts.unshift(newPost);
-            savePosts();
-            closeWriteModal();
-            renderPosts();
+                await window.addDoc(window.collection(window.db, "posts"), newPost);
+                closeWriteModal();
+                await loadPosts();
+                renderPosts();
+            } catch (e) {
+                console.error("작성 오류:", e);
+                alert("글 작성 중 오류가 발생했습니다.");
+            }
         }
 
-        function openDetailModal(id) {
+        async function openDetailModal(id) {
             const post = posts.find(p => p.id === id);
             if (!post) return;
 
             currentPostId = id;
-            post.views += 1;
-            savePosts();
+            
+            post.views = (post.views || 0) + 1;
+            try {
+                await window.updateDoc(window.doc(window.db, "posts", id), { views: post.views });
+            } catch(e) { console.error(e); }
 
             const catMap = { 'ACCUSE': '🚨 고발/신고', 'TALK': '💬 아무말', 'QNA': '❓ 질문/상담', 'GAME': '🎮 게임/파티' };
             document.getElementById('detail-category').innerText = catMap[post.category] || '기타';
@@ -370,10 +399,10 @@
             document.getElementById('detail-author').innerText = post.author;
             document.getElementById('detail-date').innerText = new Date(post.createdAt).toLocaleString();
             document.getElementById('detail-views').innerText = post.views;
-            document.getElementById('detail-likes').innerText = post.likes;
-            document.getElementById('detail-reports').innerText = post.reports;
+            document.getElementById('detail-likes').innerText = post.likes || 0;
+            document.getElementById('detail-reports').innerText = post.reports || 0;
 
-            const isBlinded = post.reports >= 3 && !post.unblindedByAdmin;
+            const isBlinded = (post.reports || 0) >= 3 && !post.unblindedByAdmin;
             const contentEl = document.getElementById('detail-content');
             
             if (isBlinded) {
@@ -410,36 +439,40 @@
             currentPostId = null;
         }
 
-        function likePost() {
+        async function likePost() {
             const post = posts.find(p => p.id === currentPostId);
             if (post) {
-                post.likes += 1;
-                savePosts();
-                document.getElementById('detail-likes').innerText = post.likes;
-                renderPosts();
+                post.likes = (post.likes || 0) + 1;
+                try {
+                    await window.updateDoc(window.doc(window.db, "posts", currentPostId), { likes: post.likes });
+                    document.getElementById('detail-likes').innerText = post.likes;
+                    renderPosts();
+                } catch(e) { console.error(e); }
             }
         }
 
-        function reportPost() {
+        async function reportPost() {
             const post = posts.find(p => p.id === currentPostId);
             if (post) {
-                post.reports += 1;
-                savePosts();
-                document.getElementById('detail-reports').innerText = post.reports;
-                alert('신고가 접수되었습니다.');
-                openDetailModal(post.id);
+                post.reports = (post.reports || 0) + 1;
+                try {
+                    await window.updateDoc(window.doc(window.db, "posts", currentPostId), { reports: post.reports });
+                    document.getElementById('detail-reports').innerText = post.reports;
+                    alert('신고가 접수되었습니다.');
+                    openDetailModal(post.id);
+                } catch(e) { console.error(e); }
             }
         }
 
-        function deletePostPrompt() {
+        async function deletePostPrompt() {
             const post = posts.find(p => p.id === currentPostId);
             if (!post) return;
 
             if (isAdmin) {
                 if (confirm('[관리자 권한] 이 게시글을 즉시 삭제하시겠습니까?')) {
-                    posts = posts.filter(p => p.id !== currentPostId);
-                    savePosts();
+                    await window.deleteDoc(window.doc(window.db, "posts", currentPostId));
                     closeDetailModal();
+                    await loadPosts();
                     renderPosts();
                 }
                 return;
@@ -447,9 +480,9 @@
 
             const pw = prompt('글 작성 시 입력한 비밀번호 4자리를 입력하세요:');
             if (pw === post.password) {
-                posts = posts.filter(p => p.id !== currentPostId);
-                savePosts();
+                await window.deleteDoc(window.doc(window.db, "posts", currentPostId));
                 closeDetailModal();
+                await loadPosts();
                 renderPosts();
                 alert('글이 삭제되었습니다.');
             } else if (pw !== null) {
@@ -481,7 +514,7 @@
             });
         }
 
-        function addComment() {
+        async function addComment() {
             const post = posts.find(p => p.id === currentPostId);
             const content = document.getElementById('comment-input').value.trim();
             const pw = document.getElementById('comment-pw').value.trim();
@@ -499,21 +532,23 @@
                 createdAt: Date.now()
             });
 
-            savePosts();
-            document.getElementById('comment-input').value = '';
-            document.getElementById('comment-pw').value = '';
-            renderComments(post);
-            renderPosts();
+            try {
+                await window.updateDoc(window.doc(window.db, "posts", currentPostId), { comments: post.comments });
+                document.getElementById('comment-input').value = '';
+                document.getElementById('comment-pw').value = '';
+                renderComments(post);
+                renderPosts();
+            } catch(e) { console.error(e); }
         }
 
-        function deleteComment(idx) {
+        async function deleteComment(idx) {
             const post = posts.find(p => p.id === currentPostId);
             if (!post) return;
 
             const target = post.comments[idx];
             if (isAdmin) {
                 post.comments.splice(idx, 1);
-                savePosts();
+                await window.updateDoc(window.doc(window.db, "posts", currentPostId), { comments: post.comments });
                 renderComments(post);
                 renderPosts();
                 return;
@@ -522,7 +557,7 @@
             const pw = prompt('댓글 작성 비밀번호를 입력하세요:');
             if (pw === target.password) {
                 post.comments.splice(idx, 1);
-                savePosts();
+                await window.updateDoc(window.doc(window.db, "posts", currentPostId), { comments: post.comments });
                 renderComments(post);
                 renderPosts();
             } else if (pw !== null) {
@@ -561,12 +596,14 @@
             }
         }
 
-        function toggleAdminPin() {
+        async function toggleAdminPin() {
             const post = posts.find(p => p.id === currentPostId);
             if (post && isAdmin) {
                 post.isPinned = !post.isPinned;
-                savePosts();
-                openDetailModal(post.id);
+                try {
+                    await window.updateDoc(window.doc(window.db, "posts", currentPostId), { isPinned: post.isPinned });
+                    openDetailModal(post.id);
+                } catch(e) { console.error(e); }
             }
         }
 
