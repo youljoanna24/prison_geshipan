@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PRISON_GESHIPAN - 익명 게시판</title>
-    <!-- Tailwind CSS (CDN) -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             background-color: #f4f4f5;
             color: #18181b;
         }
@@ -23,7 +23,7 @@
 <body class="min-h-screen flex flex-col items-center justify-start p-4 md:p-8">
 
     <!-- 메인 컨테이너 -->
-    <div class="w-full max-w-3xl bg-white border border-black shadow-lg rounded-none p-4 md:p-6 space-y-6">
+    <div class="w-full max-w-3xl bg-white border border-black shadow-lg p-4 md:p-6 space-y-6">
         
         <!-- 헤더 영역 -->
         <header class="border-b-2 border-black pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -65,4 +65,514 @@
         <nav class="flex border-b border-zinc-200 text-sm font-bold overflow-x-auto">
             <button onclick="setCategory('ALL')" id="cat-ALL" class="cat-btn px-4 py-2 border-b-2 border-black text-black">전체</button>
             <button onclick="setCategory('HOT')" id="cat-HOT" class="cat-btn px-4 py-2 text-zinc-400 hover:text-black">🔥 인기글</button>
-            <button onclick="setCategory('ACCUSE')" id="cat-ACCUSE" class="cat-btn px-4 py-
+            <button onclick="setCategory('ACCUSE')" id="cat-ACCUSE" class="cat-btn px-4 py-2 text-zinc-400 hover:text-black">🚨 고발/신고</button>
+            <button onclick="setCategory('TALK')" id="cat-TALK" class="cat-btn px-4 py-2 text-zinc-400 hover:text-black">💬 아무말</button>
+            <button onclick="setCategory('QNA')" id="cat-QNA" class="cat-btn px-4 py-2 text-zinc-400 hover:text-black">❓ 질문/상담</button>
+            <button onclick="setCategory('GAME')" id="cat-GAME" class="cat-btn px-4 py-2 text-zinc-400 hover:text-black">🎮 게임/파티</button>
+        </nav>
+
+        <!-- 게시글 목록 -->
+        <main id="post-list" class="divide-y divide-zinc-200 min-h-[300px]">
+            <!-- JS로 로딩됨 -->
+        </main>
+
+        <!-- 푸터 -->
+        <footer class="text-center text-xs text-zinc-400 pt-4 border-t border-zinc-200">
+            PRISON_GESHIPAN &copy; Anonymous Board.
+        </footer>
+    </div>
+
+    <!-- ------------------ 모달 창들 ------------------ -->
+
+    <!-- 글 작성 모달 -->
+    <div id="write-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white border-2 border-black w-full max-w-lg p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-black pb-2">
+                <h3 class="font-bold text-lg">새 익명글 작성</h3>
+                <button onclick="closeWriteModal()" class="text-zinc-500 hover:text-black"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <div class="space-y-3 text-sm">
+                <div>
+                    <label class="block font-bold mb-1">카테고리</label>
+                    <select id="write-category" class="w-full border border-zinc-300 p-2 focus:outline-none focus:border-black">
+                        <option value="ACCUSE">🚨 고발/신고</option>
+                        <option value="TALK" selected>💬 아무말</option>
+                        <option value="QNA">❓ 질문/상담</option>
+                        <option value="GAME">🎮 게임/파티</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block font-bold mb-1">작성자 식별자</label>
+                    <input type="text" id="write-author" readonly class="w-full border border-zinc-200 bg-zinc-100 p-2 font-mono text-zinc-600">
+                </div>
+
+                <div>
+                    <label class="block font-bold mb-1">제목</label>
+                    <input type="text" id="write-title" placeholder="제목을 입력하세요" class="w-full border border-zinc-300 p-2 focus:outline-none focus:border-black">
+                </div>
+
+                <div>
+                    <label class="block font-bold mb-1">내용</label>
+                    <textarea id="write-content" rows="5" placeholder="내용을 입력하세요..." class="w-full border border-zinc-300 p-2 focus:outline-none focus:border-black"></textarea>
+                </div>
+
+                <div>
+                    <label class="block font-bold mb-1">삭제 비밀번호 (4자리)</label>
+                    <input type="password" id="write-password" maxlength="4" placeholder="****" class="w-full border border-zinc-300 p-2 focus:outline-none focus:border-black">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="closeWriteModal()" class="px-4 py-2 border border-zinc-300 text-sm hover:bg-zinc-100">취소</button>
+                <button onclick="savePost()" class="px-4 py-2 bg-black text-white text-sm font-bold border border-black hover:bg-zinc-800">등록하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 상세보기 모달 -->
+    <div id="detail-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white border-2 border-black w-full max-w-2xl max-h-[90vh] flex flex-col p-6 space-y-4 overflow-y-auto">
+            <div class="flex justify-between items-start border-b border-black pb-3">
+                <div>
+                    <span id="detail-category" class="text-xs font-bold border border-black px-2 py-0.5 inline-block mb-2">카테고리</span>
+                    <h2 id="detail-title" class="text-xl font-bold break-all">제목</h2>
+                    <div class="text-xs text-zinc-500 mt-1 space-x-2">
+                        <span id="detail-author" class="font-mono text-black font-bold"></span>
+                        <span>•</span>
+                        <span id="detail-date"></span>
+                        <span>•</span>
+                        <span>조회 <span id="detail-views">0</span></span>
+                    </div>
+                </div>
+                <button onclick="closeDetailModal()" class="text-zinc-500 hover:text-black"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <!-- 내용 -->
+            <div id="detail-content" class="text-sm leading-relaxed whitespace-pre-wrap py-2 border-b border-zinc-200 break-all"></div>
+
+            <!-- 액션 버튼 -->
+            <div class="flex flex-wrap items-center justify-between gap-2 py-2">
+                <div class="flex gap-2">
+                    <button onclick="likePost()" class="px-3 py-1.5 border border-black text-xs font-bold hover:bg-black hover:text-white transition">
+                        👍 추천 (<span id="detail-likes">0</span>)
+                    </button>
+                    <button onclick="reportPost()" class="px-3 py-1.5 border border-zinc-400 text-xs text-zinc-600 hover:border-black hover:text-black">
+                        🚨 신고 (<span id="detail-reports">0</span>)
+                    </button>
+                </div>
+                <div class="flex gap-2">
+                    <button id="admin-pin-btn" onclick="toggleAdminPin()" class="hidden px-3 py-1.5 bg-zinc-800 text-white text-xs font-bold">📌 공지고정</button>
+                    <button onclick="deletePostPrompt()" class="px-3 py-1.5 border border-red-600 text-red-600 text-xs font-bold hover:bg-red-600 hover:text-white transition">삭제</button>
+                </div>
+            </div>
+
+            <!-- 댓글 영역 -->
+            <div class="space-y-3 pt-2">
+                <h4 class="font-bold text-sm border-b border-zinc-300 pb-1">댓글 (<span id="detail-comment-count">0</span>)</h4>
+                <div id="comment-list" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+
+                <div class="flex gap-2 pt-2">
+                    <input type="text" id="comment-input" placeholder="익명 댓글을 입력하세요..." class="flex-1 border border-zinc-300 p-2 text-sm focus:outline-none focus:border-black">
+                    <input type="password" id="comment-pw" maxlength="4" placeholder="암호" class="w-16 border border-zinc-300 p-2 text-sm text-center focus:outline-none focus:border-black">
+                    <button onclick="addComment()" class="px-4 py-2 bg-black text-white text-sm font-bold hover:bg-zinc-800">등록</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관리자 로그인 모달 -->
+    <div id="admin-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white border-2 border-black w-full max-w-sm p-6 space-y-4">
+            <h3 class="font-bold text-lg border-b border-black pb-2">관리자 인증</h3>
+            <p class="text-xs text-zinc-500">관리자 비밀번호를 입력해 주세요.</p>
+            <input type="password" id="admin-pw-input" placeholder="비밀번호" class="w-full border border-zinc-300 p-2 text-sm focus:outline-none focus:border-black">
+            <div class="flex justify-end gap-2">
+                <button onclick="toggleAdminModal()" class="px-3 py-1.5 border border-zinc-300 text-sm">취소</button>
+                <button onclick="loginAdmin()" class="px-3 py-1.5 bg-black text-white text-sm font-bold">인증하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 자바스크립트 전체 코드 -->
+    <script>
+        let posts = [];
+        let currentCategory = 'ALL';
+        let currentPostId = null;
+        let isAdmin = false;
+        let userIdentity = '';
+
+        const ADMIN_HASH = "8d1f2a4e4024c0840b3c69c676766649e7b2f6f4c8032f6b0f025433a7585043";
+
+        window.onload = function() {
+            initUserIdentity();
+            loadPosts();
+            renderPosts();
+        };
+
+        function initUserIdentity() {
+            let savedId = localStorage.getItem('prison_user_id');
+            if (!savedId) {
+                const rawStr = navigator.userAgent + screen.width + screen.height + Math.random();
+                let hash = 0;
+                for (let i = 0; i < rawStr.length; i++) {
+                    hash = (hash << 5) - hash + rawStr.charCodeAt(i);
+                    hash |= 0;
+                }
+                const num = Math.abs(hash % 9000) + 1000;
+                const titles = ['수감자', '모범수', '무기수', '신입죄수', '탈옥꿈나무'];
+                const title = titles[Math.abs(hash) % titles.length];
+                savedId = `[${title} #${num}]`;
+                localStorage.setItem('prison_user_id', savedId);
+            }
+            userIdentity = savedId;
+            document.getElementById('user-identity').innerText = userIdentity;
+        }
+
+        function loadPosts() {
+            const data = localStorage.getItem('prison_posts');
+            posts = data ? JSON.parse(data) : [];
+        }
+
+        function savePosts() {
+            localStorage.setItem('prison_posts', JSON.stringify(posts));
+        }
+
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function setCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = 'cat-btn px-4 py-2 text-zinc-400 hover:text-black';
+            });
+            document.getElementById(`cat-${cat}`).className = 'cat-btn px-4 py-2 border-b-2 border-black text-black font-bold';
+            renderPosts();
+        }
+
+        function renderPosts() {
+            const listEl = document.getElementById('post-list');
+            const searchKeyword = document.getElementById('search-input').value.toLowerCase();
+            listEl.innerHTML = '';
+
+            let filtered = posts.filter(p => {
+                const matchesCategory = 
+                    currentCategory === 'ALL' ? true :
+                    currentCategory === 'HOT' ? p.likes >= 5 :
+                    p.category === currentCategory;
+                const matchesSearch = p.title.toLowerCase().includes(searchKeyword) || p.content.toLowerCase().includes(searchKeyword);
+                return matchesCategory && matchesSearch;
+            });
+
+            filtered.sort((a, b) => {
+                if (a.isPinned && !b.isPinned) return -1;
+                if (!a.isPinned && b.isPinned) return 1;
+                return b.createdAt - a.createdAt;
+            });
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-12 text-zinc-400 text-sm">게시글이 없습니다.</div>`;
+                return;
+            }
+
+            filtered.forEach(post => {
+                const isBlinded = post.reports >= 3 && !post.unblindedByAdmin;
+                const catMap = { 'ACCUSE': '🚨 고발', 'TALK': '💬 아무말', 'QNA': '❓ 질문', 'GAME': '🎮 게임' };
+                
+                const item = document.createElement('div');
+                item.className = `p-4 hover:bg-zinc-50 transition cursor-pointer flex flex-col gap-1 ${post.isPinned ? 'bg-zinc-100 font-bold' : ''}`;
+                item.onclick = () => openDetailModal(post.id);
+
+                item.innerHTML = `
+                    <div class="flex items-center justify-between text-xs text-zinc-500">
+                        <span class="border border-zinc-300 px-1.5 py-0.5 text-black font-bold">${post.isPinned ? '📌 고정' : catMap[post.category] || '기타'}</span>
+                        <span>${new Date(post.createdAt).toLocaleDateString()}</span>
+                    </div>
+                    <div class="font-bold text-base text-zinc-900 ${isBlinded ? 'blur-content' : ''} break-all">
+                        ${isBlinded ? '🚨 신고 누적으로 블라인드 처리된 글입니다.' : escapeHtml(post.title)}
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-zinc-400 mt-1">
+                        <span class="font-mono text-zinc-600">${post.author}</span>
+                        <div class="space-x-2">
+                            <span>👍 ${post.likes}</span>
+                            <span>💬 ${post.comments ? post.comments.length : 0}</span>
+                            <span>조회 ${post.views}</span>
+                        </div>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
+        function openWriteModal() {
+            document.getElementById('write-author').value = userIdentity;
+            document.getElementById('write-title').value = '';
+            document.getElementById('write-content').value = '';
+            document.getElementById('write-password').value = '';
+            document.getElementById('write-modal').classList.remove('hidden');
+            document.getElementById('write-modal').classList.add('flex');
+        }
+
+        function closeWriteModal() {
+            document.getElementById('write-modal').classList.add('hidden');
+            document.getElementById('write-modal').classList.remove('flex');
+        }
+
+        function savePost() {
+            const category = document.getElementById('write-category').value;
+            const title = document.getElementById('write-title').value.trim();
+            const content = document.getElementById('write-content').value.trim();
+            const password = document.getElementById('write-password').value.trim();
+
+            if (!title || !content || !password) {
+                alert('모든 필드를 입력해 주세요.');
+                return;
+            }
+
+            const newPost = {
+                id: Date.now(),
+                category: category,
+                author: userIdentity,
+                title: title,
+                content: content,
+                password: password,
+                createdAt: Date.now(),
+                views: 0,
+                likes: 0,
+                reports: 0,
+                isPinned: false,
+                unblindedByAdmin: false,
+                comments: []
+            };
+
+            posts.unshift(newPost);
+            savePosts();
+            closeWriteModal();
+            renderPosts();
+        }
+
+        function openDetailModal(id) {
+            const post = posts.find(p => p.id === id);
+            if (!post) return;
+
+            currentPostId = id;
+            post.views += 1;
+            savePosts();
+
+            const catMap = { 'ACCUSE': '🚨 고발/신고', 'TALK': '💬 아무말', 'QNA': '❓ 질문/상담', 'GAME': '🎮 게임/파티' };
+            document.getElementById('detail-category').innerText = catMap[post.category] || '기타';
+            document.getElementById('detail-title').innerText = post.title;
+            document.getElementById('detail-author').innerText = post.author;
+            document.getElementById('detail-date').innerText = new Date(post.createdAt).toLocaleString();
+            document.getElementById('detail-views').innerText = post.views;
+            document.getElementById('detail-likes').innerText = post.likes;
+            document.getElementById('detail-reports').innerText = post.reports;
+
+            const isBlinded = post.reports >= 3 && !post.unblindedByAdmin;
+            const contentEl = document.getElementById('detail-content');
+            
+            if (isBlinded) {
+                contentEl.innerHTML = `<span class="text-red-600 font-bold">[신고 누적으로 블라인드 처리되었습니다.]</span>\n\n` + escapeHtml(post.content);
+                contentEl.classList.add('blur-content');
+                contentEl.onclick = () => {
+                    if(confirm("신고된 글입니다. 내용을 확인하시겠습니까?")) {
+                        contentEl.classList.remove('blur-content');
+                    }
+                };
+            } else {
+                contentEl.innerText = post.content;
+                contentEl.classList.remove('blur-content');
+                contentEl.onclick = null;
+            }
+
+            const pinBtn = document.getElementById('admin-pin-btn');
+            if (isAdmin) {
+                pinBtn.classList.remove('hidden');
+                pinBtn.innerText = post.isPinned ? '📌 고정 해제' : '📌 공지 고정';
+            } else {
+                pinBtn.classList.add('hidden');
+            }
+
+            renderComments(post);
+            document.getElementById('detail-modal').classList.remove('hidden');
+            document.getElementById('detail-modal').classList.add('flex');
+            renderPosts();
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+            document.getElementById('detail-modal').classList.remove('flex');
+            currentPostId = null;
+        }
+
+        function likePost() {
+            const post = posts.find(p => p.id === currentPostId);
+            if (post) {
+                post.likes += 1;
+                savePosts();
+                document.getElementById('detail-likes').innerText = post.likes;
+                renderPosts();
+            }
+        }
+
+        function reportPost() {
+            const post = posts.find(p => p.id === currentPostId);
+            if (post) {
+                post.reports += 1;
+                savePosts();
+                document.getElementById('detail-reports').innerText = post.reports;
+                alert('신고가 접수되었습니다.');
+                openDetailModal(post.id);
+            }
+        }
+
+        function deletePostPrompt() {
+            const post = posts.find(p => p.id === currentPostId);
+            if (!post) return;
+
+            if (isAdmin) {
+                if (confirm('[관리자 권한] 이 게시글을 즉시 삭제하시겠습니까?')) {
+                    posts = posts.filter(p => p.id !== currentPostId);
+                    savePosts();
+                    closeDetailModal();
+                    renderPosts();
+                }
+                return;
+            }
+
+            const pw = prompt('글 작성 시 입력한 비밀번호 4자리를 입력하세요:');
+            if (pw === post.password) {
+                posts = posts.filter(p => p.id !== currentPostId);
+                savePosts();
+                closeDetailModal();
+                renderPosts();
+                alert('글이 삭제되었습니다.');
+            } else if (pw !== null) {
+                alert('비밀번호가 일치하지 않습니다.');
+            }
+        }
+
+        function renderComments(post) {
+            const listEl = document.getElementById('comment-list');
+            document.getElementById('detail-comment-count').innerText = post.comments ? post.comments.length : 0;
+            listEl.innerHTML = '';
+
+            if (!post.comments || post.comments.length === 0) {
+                listEl.innerHTML = `<div class="text-xs text-zinc-400 py-2">댓글이 없습니다.</div>`;
+                return;
+            }
+
+            post.comments.forEach((c, idx) => {
+                const item = document.createElement('div');
+                item.className = 'border-b border-zinc-100 pb-1.5 text-xs flex justify-between items-start';
+                item.innerHTML = `
+                    <div class="space-y-0.5">
+                        <div class="font-mono text-zinc-500 font-bold">${escapeHtml(c.author)}</div>
+                        <div class="text-zinc-800">${escapeHtml(c.content)}</div>
+                    </div>
+                    <button onclick="deleteComment(${idx})" class="text-zinc-400 hover:text-red-600"><i class="fa-solid fa-xmark"></i></button>
+                `;
+                listEl.appendChild(item);
+            });
+        }
+
+        function addComment() {
+            const post = posts.find(p => p.id === currentPostId);
+            const content = document.getElementById('comment-input').value.trim();
+            const pw = document.getElementById('comment-pw').value.trim();
+
+            if (!content || !pw) {
+                alert('댓글 내용과 암호를 모두 입력해주세요.');
+                return;
+            }
+
+            if (!post.comments) post.comments = [];
+            post.comments.push({
+                author: userIdentity,
+                content: content,
+                password: pw,
+                createdAt: Date.now()
+            });
+
+            savePosts();
+            document.getElementById('comment-input').value = '';
+            document.getElementById('comment-pw').value = '';
+            renderComments(post);
+            renderPosts();
+        }
+
+        function deleteComment(idx) {
+            const post = posts.find(p => p.id === currentPostId);
+            if (!post) return;
+
+            const target = post.comments[idx];
+            if (isAdmin) {
+                post.comments.splice(idx, 1);
+                savePosts();
+                renderComments(post);
+                renderPosts();
+                return;
+            }
+
+            const pw = prompt('댓글 작성 비밀번호를 입력하세요:');
+            if (pw === target.password) {
+                post.comments.splice(idx, 1);
+                savePosts();
+                renderComments(post);
+                renderPosts();
+            } else if (pw !== null) {
+                alert('비밀번호가 다릅니다.');
+            }
+        }
+
+        function toggleAdminModal() {
+            if (isAdmin) {
+                isAdmin = false;
+                document.getElementById('admin-btn').innerText = '관리자 로그인';
+                document.getElementById('admin-btn').className = 'text-xs font-bold border border-black px-3 py-1.5 hover:bg-black hover:text-white transition';
+                alert('관리자 로그아웃 되었습니다.');
+                renderPosts();
+                return;
+            }
+            document.getElementById('admin-pw-input').value = '';
+            document.getElementById('admin-modal').classList.remove('hidden');
+            document.getElementById('admin-modal').classList.add('flex');
+        }
+
+        async function loginAdmin() {
+            const inputPw = document.getElementById('admin-pw-input').value;
+            const inputHash = await sha256(inputPw);
+
+            if (inputHash === ADMIN_HASH) {
+                isAdmin = true;
+                document.getElementById('admin-modal').classList.add('hidden');
+                document.getElementById('admin-modal').classList.remove('flex');
+                document.getElementById('admin-btn').innerText = '[총지휘관] 로그아웃';
+                document.getElementById('admin-btn').className = 'text-xs font-bold bg-black text-white px-3 py-1.5';
+                alert('관리자로 인증되었습니다.');
+                renderPosts();
+            } else {
+                alert('비밀번호가 일치하지 않습니다.');
+            }
+        }
+
+        function toggleAdminPin() {
+            const post = posts.find(p => p.id === currentPostId);
+            if (post && isAdmin) {
+                post.isPinned = !post.isPinned;
+                savePosts();
+                openDetailModal(post.id);
+            }
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
