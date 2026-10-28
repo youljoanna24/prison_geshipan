@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRISON_GESHIPAN - 익명 게시판</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f4f5;
+            color: #18181b;
+        }
+        .blur-content {
+            filter: blur(5px);
+            user-select: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-start p-4 md:p-8">
+
+    <!-- 메인 컨테이너 -->
+    <div class="w-full max-w-3xl bg-white border border-black shadow-lg rounded-none p-4 md:p-6 space-y-6">
+        
+        <!-- 헤더 영역 -->
+        <header class="border-b-2 border-black pb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-black tracking-tight uppercase">PRISON_GESHIPAN</h1>
+                <p class="text-xs text-zinc-500 mt-1">교도소 서버 전용 익명 게시판</p>
+            </div>
+            
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                <!-- 고정 닉네임 표시 -->
+                <div class="text-xs font-mono bg-zinc-100 border border-zinc-300 px-3 py-1.5 rounded">
+                    <span class="text-zinc-500">내 식별자:</span>
+                    <strong id="user-identity" class="text-black font-bold">로딩 중...</strong>
+                </div>
+
+                <!-- 관리자 버튼 -->
+                <button id="admin-btn" onclick="toggleAdminModal()" class="text-xs font-bold border border-black px-3 py-1.5 hover:bg-black hover:text-white transition">
+                    관리자 로그인
+                </button>
+            </div>
+        </header>
+
+        <!-- 상단 컨트롤 (검색 & 글작성 버튼) -->
+        <div class="flex flex-col sm:flex-row gap-2 justify-between items-stretch sm:items-center">
+            <!-- 검색창 -->
+            <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-sm"></i>
+                <input type="text" id="search-input" oninput="renderPosts()" placeholder="글 제목, 내용 검색..." 
+                    class="w-full pl-9 pr-3 py-2 text-sm border border-zinc-300 focus:outline-none focus:border-black rounded-none">
+            </div>
+
+            <!-- 글쓰기 버튼 -->
+            <button onclick="openWriteModal()" class="bg-black text-white px-4 py-2 text-sm font-bold border border-black hover:bg-zinc-800 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-pen-to-square"></i> 글쓰기
+            </button>
+        </div>
+
+        <!-- 카테고리 필터 -->
+        <nav class="flex border-b border-zinc-200 text-sm font-bold overflow-x-auto">
+            <button onclick="setCategory('ALL')" id="cat-ALL" class="cat-btn px-4 py-2 border-b-2 border-black text-black">전체</button>
+            <button onclick="setCategory('HOT')" id="cat-HOT" class="cat-btn px-4 py-2 text-zinc-400 hover:text-black">🔥 인기글</button>
+            <button onclick="setCategory('ACCUSE')" id="cat-ACCUSE" class="cat-btn px-4 py-
